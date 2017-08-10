@@ -1,3 +1,5 @@
+"""Static variables (dynamic constant references) for Python."""
+
 import dis
 import itertools
 import types

@@ -2,6 +2,11 @@
 
 import opcode
 import dis
+try:
+    from itertools import izip_longest as zip_longest
+except ImportError:
+    from itertools import zip_longest
+
 
 __all__ = ('is_non_global_scope_getter', 'get_stack_change')
 
@@ -31,6 +36,7 @@ def get_stack_change(instruction):
         raise SyntaxError('Unrecognised command: ' + instruction.opname)
     if type(x) is int:
         return x
+
     return x(instruction)
 
 '''
@@ -87,6 +93,14 @@ def reassemble(instructions):
     return _to_bytes(code)
 
 
+def validate_bytecode(code):
+    i = iter(code)
+    for instruction, arg in zip_longest(i, i):
+        if (arg is None) or (instruction < opcode.HAVE_ARGUMENT and arg):
+            return False
+    return True
+
+
 is_non_global_scope_getter = frozenset({'LOAD_DEREF', 'LOAD_FAST', 'LOAD_CONST'}).__contains__
 
 # A mapping of opcode name to how many items from the stack are removed when executed.
@@ -129,7 +143,7 @@ stack_change.update({
     'BINARY_XOR': -1,
     'BINARY_OR': -1,
     'INPLACE_POWER': -1,
-    'GET_ITER': None,
+    'GET_ITER': 0,
     'GET_YIELD_FROM_ITER': None,
     'PRINT_EXPR': None,
     'LOAD_BUILD_CLASS': None,
@@ -181,8 +195,8 @@ stack_change.update({
     'SETUP_EXCEPT': None,
     'SETUP_FINALLY': None,
     'LOAD_FAST': +1,
-    'STORE_FAST': None,
-    'DELETE_FAST': None,
+    'STORE_FAST': -1,
+    'DELETE_FAST': 0,
     'STORE_ANNOTATION': None,
     'RAISE_VARARGS': None,
     'CALL_FUNCTION': _neg_arg,
@@ -190,8 +204,8 @@ stack_change.update({
     'BUILD_SLICE': _neg_arg,
     'LOAD_CLOSURE': None,
     'LOAD_DEREF': +1,
-    'STORE_DEREF': None,
-    'DELETE_DEREF': None,
+    'STORE_DEREF': -1,
+    'DELETE_DEREF': 0,
     'CALL_FUNCTION_KW': (lambda i: _neg_arg(i) - 2),
     'CALL_FUNCTION_EX': None,
     'SETUP_WITH': None,
