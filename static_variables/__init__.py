@@ -17,12 +17,28 @@ __all__ = ('static', 'resolve_static', 'EMPTY_SET')
 __author__ = 'Mital Ashok'
 __credits__ = ['Mital Ashok']
 __license__ = 'MIT'
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 __maintainer__ = 'Mital Ashok'
 __author_email__ = __email__ = 'mital.vaja@googlemail.com'
 __status__ = 'Development'
 
 EMPTY_SET = set()
+
+# _flag_name_map = {name: mask for mask, name in dis.COMPILER_FLAG_NAMES.items()}
+# _FLAG_MASK = ~(
+#     _flag_name_map['VARARGS'] |
+#     _flag_name_map['VARKEYWORDS'] |
+#     _flag_name_map['GENERATOR'] |
+#     _flag_name_map['ITERABLE_COROUTINE'] |
+#     _flag_name_map['ASYNC_GENERATOR']
+# )
+
+_FLAG_MASK = ~0b1100101100
+
+_GET_ATTRIBUTE = {
+    'co_flags': codetools.attr_getter('co_flags'),
+    'co_consts': codetools.attr_getter('co_consts')
+}
 
 
 def static(expression):
@@ -39,7 +55,7 @@ def static(expression):
 def _evaluate_static(f, code):
     kwargs = {
         'co_argcount': 0,
-        'co_flags': codetools.DEFAULT_FLAGS,
+        'co_flags': _GET_ATTRIBUTE['co_flags'](f) & _FLAG_MASK,
         'co_code': code
     }
     if codetools.HAS_KWARGS:
@@ -62,7 +78,7 @@ def resolve_static(f=None, empty_set_literal=False):
     new_code = []
     stack_length = 0
     static_code = []
-    constants = list(codetools.get_attr(f, 'co_consts'))
+    constants = list(_GET_ATTRIBUTE['co_consts'](f))
     const_index = itertools.count(len(constants))
     in_static = False
     for i in dis.Bytecode(f):
@@ -135,11 +151,9 @@ def check_static():
         pass
     import warnings
 
-
     def static(expression):
         warnings.warn(RuntimeWarning('`static` doesn\'t seem to work on this platform'))
         return expression
-
 
     def resolve_static(f=None, empty_set_literal=False):
         warnings.warn(RuntimeWarning('`static` doesn\'t seem to work on this platform'))
@@ -154,6 +168,10 @@ def check_static():
     return 1
 
 if __name__ == '__main__':
-    import sys
+    status = check_static()
+    if status != 0:
+        import sys
 
-    sys.exit(check_static())
+        sys.exit(status)
+
+    del status

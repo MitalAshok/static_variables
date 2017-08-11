@@ -3,6 +3,7 @@
 from types import FunctionType, CodeType, MethodType
 import copy as _copy
 import functools
+import operator
 
 
 __all__ = (
@@ -106,8 +107,21 @@ _ATTRIBUTE_ALIASES = {
     'constants': 'consts'
 }.get
 
+_NORMALISE_CACHE = {}
+
 
 def _normalise_func_attr(attribute):
+    try:
+        return _NORMALISE_CACHE[attribute]
+    except KeyError:
+        pass
+    normalised = _NORMALISE_CACHE[attribute] = (
+        __normalise_func_attr(attribute)
+    )
+    return normalised
+
+
+def __normalise_func_attr(attribute):
     has_func_prefix = attribute.startswith('func_')
     has_co_prefix = attribute.startswith('co_')
     is_dunder = attribute.startswith('__') and attribute.endswith('__') and len(attribute) > 3
@@ -217,7 +231,8 @@ def get_attr(f, attribute):
     return getattr(f, attribute)
 
 
-def _empty():
-    pass
-
-DEFAULT_FLAGS = get_attr(_empty, 'co_flags')
+def attr_getter(attribute):
+    is_code_arg, attribute = _normalise_func_attr(attribute)
+    if is_code_arg:
+        return operator.attrgetter(CODE_ATTR + '.' + attribute)
+    return operator.attrgetter(attribute)

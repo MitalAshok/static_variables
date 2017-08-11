@@ -68,8 +68,6 @@ class TestStaticVariables(unittest.TestCase):
         self.assertEqual(test(), [3])
 
     def test_containers(self):
-        self.assertFalse(True, 'Currently, this test raises a segmentation fault. Probably don\'t use nested scopes.')
-        return
         @t
         def f():
             ls = static([self, 1, 2, ()])
@@ -119,6 +117,24 @@ class TestStaticVariables(unittest.TestCase):
             self.assertFalse(empty_set)
             self.assertEqual(empty_set, set())
             self.assertNotEqual(empty_set, {})
+
+    def test_generators(self):
+        @t
+        def f():
+            while True:
+                yield static([])
+
+        g = f()
+
+        if hasattr(type(g), 'next'):
+            next_ = type(g).next
+        else:
+            next_ = next
+
+        ls = next_(g)
+        next_(g).append(2)
+        self.assertEqual(ls, [2])
+        self.assertIs(ls, next_(g))
 
 
 if __name__ == '__main__':

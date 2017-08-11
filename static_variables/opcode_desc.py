@@ -39,23 +39,10 @@ def get_stack_change(instruction):
 
     return x(instruction)
 
-'''
-def _unpack_opargs(code):
-    extended_arg = 0
-    for i in range(0, len(code), 2):
-        op = code[i]
-        if op >= HAVE_ARGUMENT:
-            arg = code[i+1] | extended_arg
-            extended_arg = (arg << 8) if op == EXTENDED_ARG else 0
-        else:
-            arg = None
-        yield (i, op, arg)
-'''
-
 _unexpected_argument = 'Opcode {opname!r} ({opcode!r}) should not have an arg, but has arg {arg!r}'.format
 _expected_argument = 'Opcode {!r} ({!r}) should have an arg, but doesn\'t'.format
 
-# dis.Instruction(opname, opcode, arg, argval, argrepr, offset, starts_line, is_jump_target)
+
 def create_instruction(op_name_or_code, arg, argval=None, argrepr='', offset=None, starts_line=None, is_jump_target=False):
     if type(op_name_or_code) is int:
         opcode_ = op_name_or_code

@@ -1,7 +1,7 @@
 """Typing stub for static_variables.codetools"""
 
-from typing import Tuple, List, TypeVar, Optional, Union, Callable, Any
-from types import FunctionType
+from typing import Tuple, List, TypeVar, Optional, Union, Callable, Any, Mapping, Dict
+from types import FunctionType, CodeType
 
 TYPE_CHECKING: bool
 
@@ -18,6 +18,21 @@ __email__: str
 __status__: str
 
 EMPTY_SET: set
+
+_FLAG_MASK: int
+
+_GET_ATTRIBUTE: Mapping[str, Callable[
+    [FunctionType],
+    Union[
+        CodeType,
+        Dict[str, Any],
+        str,
+        None,
+        Tuple[Any, ...],
+        int,
+        bytes
+    ]
+]]
 
 T = TypeVar('T')
 

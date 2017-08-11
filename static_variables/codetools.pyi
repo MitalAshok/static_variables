@@ -1,16 +1,9 @@
 """Typing stub for static_variables.codetools"""
 
-from typing import Tuple, Dict, Union, Any, Callable, overload
+from typing import Tuple, Dict, Union, Any, Callable, TypeVar, overload
 from types import FunctionType, CodeType
 
 __all__: Tuple[str, ...]
-
-def f(a):
-    def g():
-        return a
-    return g
-
-CellType = type(f(None).__closure__[0])
 
 _constructor_args = Union[
     CodeType,  # f.__code__
@@ -18,11 +11,13 @@ _constructor_args = Union[
     str,  # f.__name__
     None,  # f.__defaults__, f.__closure__
     Tuple[Any, ...],  # f.__defaults__, f.__code__.co_consts
-    Tuple[CellType, ...],  # f.__closure__
+    # Tuple[CellType, ...],  # f.__closure__  # Subset of above
     int,  # f.__code__.co_arg_count, ..., f.__code__.co_flags, f.__code__.co_firstlineno
     bytes,  # f.__code__.co_code, f.__code__.co_lnotab
     Tuple[str, ...],  # f.__code__.co_name, f.__code__.co_freevars, f.__code__.co_cellvars
 ]
+
+T = TypeVar('T')
 
 CODE_ATTR: str
 GLOBALS_ATTR: str
@@ -45,18 +40,24 @@ HAS_KWARGS: bool
 
 CODE_ARGS: Tuple[str, ...]
 
-def copy(x: Any) -> Any:
+def copy(x: T) -> T:
     ...
 
 
-def deepcopy(x: Any) -> Any:
+def deepcopy(x: T) -> T:
     ...
 
 
 _ATTRIBUTE_ALIASES: Callable[[str], Union[str, None]]
 
+_NORMALISE_CACHE: Dict[str, Tuple[bool, str]]
+
 
 def _normalise_func_attr(attribute: str) -> Tuple[bool, str]:
+    ...
+
+
+def __normalise_func_attr(attribute: str) -> Tuple[bool, str]:
     ...
 
 
@@ -64,9 +65,11 @@ def _normalise_func_attr(attribute: str) -> Tuple[bool, str]:
 def set_attr(f: FunctionType, attribute: str, new_value: _constructor_args) -> FunctionType:
     ...
 
+
 @overload
 def set_attr(f: FunctionType, **kwargs: _constructor_args) -> FunctionType:
     ...
+
 
 def set_attr(f: FunctionType, *args: Union[str, _constructor_args], **kwargs: _constructor_args) -> FunctionType:
     ...
@@ -84,9 +87,7 @@ def get_attr(f: FunctionType, attribute: str) -> _constructor_args:
     ...
 
 
-def _empty() -> None:
-    pass
+def attr_getter(attribute: str) -> Callable[[FunctionType], _constructor_args]:
+    ...
 
-DEFAULT_FLAGS: int
-
-del _constructor_args, CellType, f
+del _constructor_args, T
