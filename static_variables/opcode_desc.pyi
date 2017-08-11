@@ -4,7 +4,7 @@ from typing import Tuple, Callable, Union, Iterable, Optional, Any, Dict, Genera
 
 from dis import Instruction
 
-__all__ = Tuple[str, ...]
+__all__: Tuple[str, ...]
 
 _to_bytes: Callable[[bytearray], bytes]
 

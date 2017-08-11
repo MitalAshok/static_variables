@@ -34,7 +34,7 @@ METHOD_SELF_ATTR: str
 
 METHOD_HAS_CLASS: bool
 
-METHOD_ARGS = Union[Tuple[str, str, str], Tuple[str, str]]
+METHOD_ARGS: Union[Tuple[str, str, str], Tuple[str, str]]
 
 HAS_KWARGS: bool
 
