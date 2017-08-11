@@ -43,13 +43,22 @@ _unexpected_argument = 'Opcode {opname!r} ({opcode!r}) should not have an arg, b
 _expected_argument = 'Opcode {!r} ({!r}) should have an arg, but doesn\'t'.format
 
 
-def create_instruction(op_name_or_code, arg, argval=None, argrepr='', offset=None, starts_line=None, is_jump_target=False):
+def create_instruction(op_name_or_code, arg=None, argval=None, argrepr='', offset=None, starts_line=None, is_jump_target=False):
     if type(op_name_or_code) is int:
         opcode_ = op_name_or_code
-        opname = opcode.opname[opcode_]
+        try:
+            if opcode_ < 0:
+                opname = [][-1]  # Raise a sensible error context
+            else:
+                opname = opcode.opname[opcode_]
+        except IndexError:
+            raise ValueError('Unknown opcode: ' + repr(opcode_))
     elif type(op_name_or_code) is str:
         opname = op_name_or_code
-        opcode_ = opcode.opmap[opname]
+        try:
+            opcode_ = opcode.opmap[opname]
+        except KeyError:
+            raise ValueError('Unknown opname: ' + repr(opname))
     else:
         raise TypeError('op_name_or_code must be a str or int')
     if (opcode_ >= opcode.HAVE_ARGUMENT) == (arg is None):

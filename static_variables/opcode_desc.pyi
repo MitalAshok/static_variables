@@ -24,7 +24,7 @@ _unexpected_argument: Callable[[str, int, int], str]
 _expected_argument: Callable[[str, int], str]
 
 def create_instruction(
-        op_name_or_code: Union[int, str], arg: int, argval: Any=None,
+        op_name_or_code: Union[int, str], arg: Optional[int]=None, argval: Any=None,
         argrepr: str='', offset: Optional[int]=None, starts_line: Optional[int]=None,
         is_jump_target: Optional[bool]=False
 ) -> Generator[Instruction, None, None]:
