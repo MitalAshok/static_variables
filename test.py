@@ -182,5 +182,27 @@ class TestStaticVariables(unittest.TestCase):
 
         self.assertEqual(f(), 1)
 
+    def test_static_empty_set(self):
+        @t(empty_set_literal=True)
+        def f():
+            return static({}), static(EMPTY_SET)
+
+        a, b = f()
+        c, d = f()
+        self.assertIs(a, c)
+        self.assertIs(b, d)
+
+    def test_invalid(self):
+        with self.assertRaises(SyntaxError):
+            @t
+            def f():
+                return static(static([]))
+
+        with self.assertRaises(SyntaxError):
+            @t
+            def f():
+                return static
+
+
 if __name__ == '__main__':
     unittest.main()

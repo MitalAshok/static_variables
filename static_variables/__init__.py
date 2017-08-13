@@ -130,9 +130,9 @@ def resolve_static(f=None, empty_set_literal=False, static_variables=None):
             closure = list(closure)
         closure_index = itertools.count(len(closure))
         closure_names = list(_GET_ATTRIBUTE['co_freevars'](f))
-        closure_map = {}
         if len(closure_names) != len(closure):
             raise ValueError('Not enough names for the free variables')
+        closure_map = {name: cell for name, cell in zip(closure_names, closure)}
     new_code = []
     stack_length = 0
     static_code = []
@@ -140,35 +140,40 @@ def resolve_static(f=None, empty_set_literal=False, static_variables=None):
     const_index = itertools.count(len(constants))
     in_static = False
     instructions = list(dis.Bytecode(f))[::-1]
+    last_static = False
     while instructions:
         i = instructions.pop()
         if (
             (i.argval == 'EMPTY_SET' and i.opname == 'LOAD_GLOBAL') or
             (empty_set_literal and i.argval == 0 and i.opname == 'BUILD_MAP')
         ):
-            c = opcode_desc.create_instruction('BUILD_SET', 0)
+            c = opcode_desc.create_instruction('BUILD_SET', 0, 0)
             i = next(c)
             if next(c, False):
                 raise RuntimeError('BUILD_SET opcode with arg of 0 is extended?')
         elif opcode_desc.is_variable_manipulator(i.opname) and i.argval in static_variable_names:
-            has_static_var = True
-            try:
-                index = closure_map[i.argval]
-            except KeyError:
-                closure_map[i.argval] = index = next(closure_index)
-                closure_names.append(i.argval)
-                closure.append(make_cell(static_variables[i.argval]))
-            if i.opname.startswith('LOAD'):
-                new_op = 'LOAD_DEREF'
-            elif i.opname.startswith('STORE'):
-                new_op = 'STORE_DEREF'
-            elif i.opname.startswith('DELETE'):
-                new_op = 'DELETE_DEREF'
+            if last_static:
+                last_static = False
             else:
-                raise RuntimeError('Unexpected variable manipulator: ' + repr(i.opname))
-            c = opcode_desc.create_instruction(new_op, index)
-            instructions.extend(list(c)[::-1])
-            continue
+                last_static = True
+                has_static_var = True
+                try:
+                    index = closure_map[i.argval]
+                except KeyError:
+                    closure_map[i.argval] = index = next(closure_index)
+                    closure_names.append(i.argval)
+                    closure.append(make_cell(static_variables[i.argval]))
+                if i.opname.startswith('LOAD'):
+                    new_op = 'LOAD_DEREF'
+                elif i.opname.startswith('STORE'):
+                    new_op = 'STORE_DEREF'
+                elif i.opname.startswith('DELETE'):
+                    new_op = 'DELETE_DEREF'
+                else:
+                    raise RuntimeError('Unexpected variable manipulator: ' + repr(i.opname))
+                c = opcode_desc.create_instruction(new_op, index, i.argval)
+                instructions.extend(list(c)[::-1])
+                continue
         if i.argval == 'static' and opcode_desc.is_non_global_scope_getter(i.opname):
             raise SyntaxError('No variables named `static` are allowed')
         if i.opname == 'LOAD_GLOBAL' and i.argval == 'static':

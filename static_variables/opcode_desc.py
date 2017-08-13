@@ -158,7 +158,7 @@ stack_change.update({
     'BREAK_LOOP': None,
     'WITH_CLEANUP_START': None,
     'WITH_CLEANUP_FINISH': None,
-    'RETURN_VALUE': _error_raiser(RuntimeError('Should not be able to return within `static` expression')),
+    'RETURN_VALUE': -1,
     'IMPORT_STAR': None,
     'SETUP_ANNOTATIONS': None,
     'YIELD_VALUE': _error_raiser(SyntaxError('Cannot yield from `static`')),
