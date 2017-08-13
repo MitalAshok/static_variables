@@ -23,7 +23,14 @@ __author_email__ = __email__ = 'mital.vaja@googlemail.com'
 __status__ = 'Development'
 
 EMPTY_SET = set()
-NO_VALUE = object()
+
+
+class NoValueType(object):
+    def __repr__(self):
+        return 'NO_VALUE'
+
+
+NO_VALUE = NoValueType()
 
 # _flag_name_map = {name: mask for mask, name in dis.COMPILER_FLAG_NAMES.items()}
 # _FLAG_MASK = ~(
@@ -211,7 +218,7 @@ def check_static():
     """
     global static, resolve_static
     if hasattr(static, '__defunct'):
-        return 1
+        return int(static.__defunct)
     try:
         @resolve_static
         def f():

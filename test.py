@@ -17,22 +17,24 @@ NO_VALUE = static_variables.NO_VALUE
 
 
 class TestStaticVariables(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        if sys.version_info < (3, 6):
+            raise Exception('Cannot run tests on this python version (' + sys.version + ')')
+        import platform
+
+        imp = platform.python_implementation()
+        if imp != 'CPython':
+            raise Exception('Cannot run tests on this python implementation (' + imp + ')')
+        if static_variables.check_static() != 0:
+            raise Exception('static_variables.check_static() failed')
+
     def test_static_constants(self):
         @t
         def f():
             one = static(1)
             two = int(static('2'))
             return one + two
-
-        # print('Dissassembling...')
-        # print('Undecorated:')
-        # __import__('dis').dis(f)
-        # c = f.__code__.co_code
-        # f = t(f)
-        # print('Decorated:')
-        # __import__('dis').dis(f)
-        # print(c)
-        # print(f.__code__.co_code)
 
         self.assertEqual(f(), 3)
 
@@ -93,8 +95,6 @@ class TestStaticVariables(unittest.TestCase):
         self.assertIs(ls[0], self)
 
     def test_mutations(self):
-        if sys.version_info < (3, 6):
-            return # Untested on 3.5, doesn't seem to work on 3.4
         @t
         def f():
             return static([])

@@ -18,6 +18,8 @@ __email__: str
 __status__: str
 
 EMPTY_SET: set
+NoValueType: type
+NO_VALUE: NoValueType
 
 _FLAG_MASK: int
 

@@ -29,7 +29,7 @@ Usage
     print(f())  # 3
 
 The signature for ``static_variables`` is ``Mapping[str, Any]``, where
-the value is the initial value.
+the key is the name of the variable and the value is the initial value.
 
 Also note that static variables will override global, nonlocal and local
 variables with the same name.
@@ -47,12 +47,12 @@ beginning:
             return value
         except NameError:
             value = could_be_anything()
-            # Value could also be `None`, so `None`
+            # `value` could also be `None`, so `None`
             # is not a sensible default.
             return value
      
     get_value()  # Runs `could_be_anything`
-    get_value()  # Returns static value
+    get_value()  # Return the static value
 
 ``static``
 ~~~~~~~~~~
