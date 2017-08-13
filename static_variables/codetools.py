@@ -88,8 +88,12 @@ def copy(x):
 def deepcopy(x):
     if isinstance(x, FunctionType):
         f = FunctionType(*[deepcopy(getattr(x, i)) for i in FUNCTION_ARGS])
-        func_dict = getattr(x, DICT_ATTR, {})
-        getattr(f, DICT_ATTR).update({deepcopy(k): deepcopy(func_dict[k]) for k in func_dict})
+        try:
+            func_dict = getattr(f, DICT_ATTR)
+        except AttributeError:
+            func_dict = {}
+            setattr(f, DICT_ATTR, func_dict)
+        func_dict.update({deepcopy(k): deepcopy(func_dict[k]) for k in func_dict})
         return functools.wraps(x)(f)
     if isinstance(x, CodeType):
         return CodeType(*[deepcopy(getattr(x, i)) for i in CODE_ARGS])
@@ -191,10 +195,13 @@ def _set_attr(f, attribute, new_value):
 
 
 def _set_attrs(f, **new_attributes):
+    setting_closure = False
     normalised = {}
     for attr in new_attributes:
         value = new_attributes[attr]
         is_code_arg, norm_attr = _normalise_func_attr(attr)
+        if norm_attr == CLOSURE_ATTR:
+            setting_closure = True
         if norm_attr in normalised:
             if norm_attr == CODE_ATTR and isinstance(value, CodeType) and type(normalised[CODE_ATTR]) is type(b''):
                 normalised['co_code'] = normalised[CODE_ATTR]
@@ -202,7 +209,10 @@ def _set_attrs(f, **new_attributes):
                 raise ValueError('Duplicate entry for {}'.format(norm_attr))
         normalised[norm_attr] = is_code_arg, value
 
+    if setting_closure:
+        new_closure = normalised.pop(CLOSURE_ATTR)[1]
     f = deepcopy(f)
+
     if CODE_ATTR in normalised:
         for attr in normalised:
             is_code_arg, value = normalised[attr]
@@ -211,6 +221,8 @@ def _set_attrs(f, **new_attributes):
                     'Cannot set {0!r} and attributes of {0!r} at the same time'.format(CODE_ATTR)
                 )
             setattr(f, attr, value)
+        if setting_closure:
+            f = _set_attr(f, CLOSURE_ATTR, new_closure)
         return f
     code = getattr(f, CODE_ATTR)
     code_args = [getattr(code, i) for i in CODE_ARGS]
@@ -220,7 +232,23 @@ def _set_attrs(f, **new_attributes):
             code_args[CODE_ARGS.index(attr)] = value
         else:
             setattr(f, attr, value)
-    setattr(f, CODE_ATTR, CodeType(*code_args))
+    new_code = CodeType(*code_args)
+    if setting_closure:
+        new_f = FunctionType(*(
+            new_closure if i == CLOSURE_ATTR else (
+              new_code if i == CODE_ATTR else
+              deepcopy(getattr(f, i))
+            )
+            for i in FUNCTION_ARGS
+        ))
+        try:
+            func_dict = getattr(f, DICT_ATTR)
+        except AttributeError:
+            func_dict = {}
+            setattr(f, DICT_ATTR, func_dict)
+        func_dict.update({deepcopy(k): deepcopy(func_dict[k]) for k in func_dict})
+        return functools.wraps(f)(new_f)
+    setattr(f, CODE_ATTR, new_code)
     return f
 
 

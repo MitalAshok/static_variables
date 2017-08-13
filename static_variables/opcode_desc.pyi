@@ -40,5 +40,6 @@ def validate_bytecode(code: Iterable[bytes]) -> bool:
 
 
 is_non_global_scope_getter: Callable[[str], bool]
+is_variable_manipulator: Callable[[str], bool]
 
 stack_change: Dict[str, Union[int, Callable[[Instruction], int], None]]

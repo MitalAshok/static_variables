@@ -13,6 +13,7 @@ finally:
 
 static = static_variables.static
 t = static_variables.resolve_static
+NO_VALUE = static_variables.NO_VALUE
 
 
 class TestStaticVariables(unittest.TestCase):
@@ -136,6 +137,46 @@ class TestStaticVariables(unittest.TestCase):
         self.assertEqual(ls, [2])
         self.assertIs(ls, next_(g))
 
+    def test_static_variables(self):
+        @t(static_variables={'t': NO_VALUE})
+        def f():
+            try:
+                t += 1
+            except NameError:
+                t = 0
+            return t
+
+        self.assertEqual(f(), 0)
+        self.assertEqual(f(), 1)
+        self.assertEqual(f(), 2)
+
+        def get_free_name_error():
+            def closure():
+                return t
+            if False:
+                t = True
+            try:
+                closure()
+            except NameError as e:
+                return e
+            self.assertFalse(True, 'Did not raise NameError')
+
+        @t(static_variables={'t': NO_VALUE})
+        def f():
+            return t
+
+        try:
+            f()
+            with self.assertRaises(NameError):
+                pass
+        except NameError as e:
+            self.assertEqual(repr(e), repr(get_free_name_error()))
+
+        @t(static_variables={'t': 1})
+        def f():
+            return t
+
+        self.assertEqual(f(), 1)
 
 if __name__ == '__main__':
     unittest.main()

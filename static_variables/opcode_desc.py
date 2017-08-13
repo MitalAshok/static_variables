@@ -98,6 +98,11 @@ def validate_bytecode(code):
 
 
 is_non_global_scope_getter = frozenset({'LOAD_DEREF', 'LOAD_FAST', 'LOAD_CONST'}).__contains__
+is_variable_manipulator = frozenset({
+    'STORE_FAST', 'STORE_GLOBAL', 'STORE_DEREF',
+    'LOAD_FAST', 'LOAD_GLOBAL', 'LOAD_DEREF',
+    'DELETE_FAST', 'DELETE_GLOBAL', 'LOAD_GLOBAL'
+}).__contains__
 
 # A mapping of opcode name to how many items from the stack are removed when executed.
 stack_change = dict.fromkeys(opcode.opmap)

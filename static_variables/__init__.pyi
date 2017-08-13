@@ -35,6 +35,15 @@ _GET_ATTRIBUTE: Mapping[str, Callable[
 ]]
 
 T = TypeVar('T')
+try:
+    CellType = type((lambda x=None: lambda: x)().__closure__[0])
+except AttributeError:
+    try:
+        CellType = type((lambda x=None: lambda: x)().func_closure[0])
+    except (AttributeError, IndexError):
+        CellType = Any
+except IndexError:
+    CellType = Any
 
 def static(expression: T) -> T:
     return expression
@@ -44,7 +53,19 @@ def _evaluate_static(f: FunctionType, code: bytes) -> Any:
     ...
 
 
-def resolve_static(f: Optional[FunctionType]=None, empty_set_literal: bool=False) -> Union[FunctionType, Callable[[FunctionType], FunctionType]]:
+def make_cell(value: Any) -> CellType:
+    ...
+
+
+INVALID_STATIC_VARIABLES: Tuple[str, ...]
+STATIC_FLAG_MASK: int
+
+
+def resolve_static(
+        f: Optional[FunctionType]=None,
+        empty_set_literal: bool=False,
+        static_variables: Optional[Mapping[str, Any]]=None
+) -> Union[FunctionType, Callable[[FunctionType], FunctionType]]:
     if f is None:
         def decorator(f):
             return resolve_static(f, empty_set_literal=empty_set_literal)
@@ -55,4 +76,4 @@ def resolve_static(f: Optional[FunctionType]=None, empty_set_literal: bool=False
 def check_static() -> int:
     return 0
 
-del T
+del T, CellType

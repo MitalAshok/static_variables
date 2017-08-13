@@ -12,6 +12,48 @@ Static variables for Python
 Usage
 -----
 
+``static_variables``
+~~~~~~~~~~~~~~~~~~~~
+
+.. code:: python
+
+    from static_variables import resolve_static
+     
+    @resolve_static(static_variables={'counter': 0})
+    def f():
+        counter += 1
+        return counter
+     
+    print(f())  # 1
+    print(f())  # 2
+    print(f())  # 3
+
+The signature for ``static_variables`` is ``Mapping[str, Any]``, where
+the value is the initial value.
+
+Also note that static variables will override global, nonlocal and local
+variables with the same name.
+
+Set the value to ``static_variables.NO_VALUE`` to have no value in the
+beginning:
+
+.. code:: python
+
+    from static_variables import resolve_static, NO_VALUE
+     
+    @resolve_static(staic_variables={'value': NO_VALUE})
+    def get_value():
+        try:
+            return value
+        except NameError:
+            value = could_be_anything()
+            # Value could also be `None`, so `None`
+            # is not a sensible default.
+            return value
+     
+    get_value()  # Runs `could_be_anything`
+    get_value()  # Returns static value
+
 ``static``
 ~~~~~~~~~~
 
@@ -35,8 +77,7 @@ Usage
     assert ls is f()
 
 Since Python variables are more like name tags, ``static`` will only
-really work well for mutable objects, like ``list``\ s or
-``io.StringIO``\ s.
+really work well for mutable objects, like ``list``\ s or ``set``\ s.
 
 For example, the following does not work:
 
@@ -51,10 +92,9 @@ For example, the following does not work:
     assert f() == 1  # True
     assert f() == 2  # False
 
-The only way to do that would be to reimplement a CPython byte-code
-interpreter in Python, and modify it to work.
+You would have to use the ``static_variables`` argument to achieve this.
 
-The static variable will always have the same ``id``. It will refer to
+The static variable will always have the same ``id``. They will refer to
 the same object, and is stored at the end of a function's
 ``function.__code__.co_consts``
 
@@ -157,3 +197,41 @@ From source
 
     $ git clone 'https://github.com/MitalAshok/static_variables.git'
     $ python ./static_variables/setup.py install
+
+How does it work?
+-----------------
+
+``static_variables``
+~~~~~~~~~~~~~~~~~~~~
+
+This creates a new variable in the closure of a function. The closure
+remains between function calls.
+
+It replaces ``(LOAD|STORE|DELETE)_GLOBAL`` and
+``(LOAD|STORE|DELETE)_FAST`` (local variables) opcodes in the bytecode
+with ``(LOAD|STORE|DELETE)_DEREF`` (load from the closure) ones.
+
+``static``
+~~~~~~~~~~
+
+The bytecode in Python is stack-based. ``resolve_static`` looks for a
+``LOAD_GLOBAL 'static'`` opcode and then starts tracking what the size
+of the stack will be. When the stack size reaches ``0`` and a
+``CALL_FUNCTION 1`` (call the top of the stack with 1 item from below it
+on the stack) opcode is reached, it extracts the bytecode, creates a new
+function, and calls it to evaluate the bytecode. The whole
+``static(...)`` is replaced with ``LOAD_CONST``, to load a constant
+value which is appended to the code's ``co_consts``.
+
+``empty_set_literal``
+~~~~~~~~~~~~~~~~~~~~~
+
+While iterating over the bytecode, if ``BUILD_MAP 0`` is encountered
+(Create a new dictionary from the previous 0 items. i.e., an empty
+dictionary), it is replaced with ``BUILD_SET 0``, which creates an empty
+set instead. This opcode still exists even though it doesn't naturally
+occur so that it's argument still correlates with the number of items to
+pop off of the stack to build the set with.
+
+If a ``LOAD_GLOBAL 'EMPTY_SET'`` is encountered, it is always replaced
+with a ``BUILD_SET 0`` (i.e., a new empty set.)
