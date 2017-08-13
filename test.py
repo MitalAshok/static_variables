@@ -40,10 +40,12 @@ class TestStaticVariables(unittest.TestCase):
         self.assertEqual(f(), 3)
 
     def test_static_binary_ops(self):
+        ONE = 1
+        TWO = 2
         @t
         def f():
-            three = static(1 + 2)
-            four = static(2 * 2)
+            three = static(ONE + 2)
+            four = static(2 * TWO)
             return three + four
 
         self.assertEqual(f(), 7)
