@@ -14,6 +14,7 @@ finally:
 static = static_variables.static
 t = static_variables.resolve_static
 NO_VALUE = static_variables.NO_VALUE
+EMPTY_SET = static_variables.EMPTY_SET
 
 
 class TestStaticVariables(unittest.TestCase):
@@ -118,6 +119,7 @@ class TestStaticVariables(unittest.TestCase):
             self.assertFalse(empty_set)
             self.assertEqual(empty_set, set())
             self.assertNotEqual(empty_set, {})
+            self.assertIsNot(empty_set, func())
 
     def test_generators(self):
         @t
