@@ -55,7 +55,7 @@ setup_args = dict(
 
     keywords=['library', 'static', 'CPython', 'code object'],
 
-    packages=find_packages(exclude=['contrib', 'docs', 'tests']),
+    packages=find_packages(exclude=['contrib', 'docs', 'tests', 'examples']),
 
     install_requires=[],
     extras_require={},
