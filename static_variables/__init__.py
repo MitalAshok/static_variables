@@ -151,7 +151,7 @@ def resolve_static(f=None, empty_set_literal=False, static_variables=None):
             i = next(c)
             if next(c, False):
                 raise RuntimeError('BUILD_SET opcode with arg of 0 is extended?')
-        elif opcode_desc.is_variable_manipulator(i.opname) and i.argval in static_variable_names:
+        if opcode_desc.is_variable_manipulator(i.opname) and i.argval in static_variable_names:
             if last_static:
                 last_static = False
             else:
@@ -174,6 +174,8 @@ def resolve_static(f=None, empty_set_literal=False, static_variables=None):
                 c = opcode_desc.create_instruction(new_op, index, i.argval)
                 instructions.extend(list(c)[::-1])
                 continue
+        elif i.opname != 'EXTENDED_ARG':
+            last_static = False
         if i.argval == 'static' and opcode_desc.is_non_global_scope_getter(i.opname):
             raise SyntaxError('No variables named `static` are allowed')
         if i.opname == 'LOAD_GLOBAL' and i.argval == 'static':
