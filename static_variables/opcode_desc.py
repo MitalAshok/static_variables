@@ -8,13 +8,17 @@ except ImportError:
     from itertools import zip_longest
 
 
-__all__ = ('is_non_global_scope_getter', 'get_stack_change')
+__all__ = (
+    'get_stack_change', 'create_instruction', 'reassemble', 'validate_bytecode',
+    'is_non_global_scope_getter', 'is_variable_manipulator'
+)
 
 if type(b'') is str:
     def _to_bytes(byte_array):
-        return b''.join(chr(byte) for byte in b)
+        return b''.join(chr(byte) for byte in byte_array)
 else:
     _to_bytes = bytes
+
 
 def _neg_arg(i):
     return -i.argval
