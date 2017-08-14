@@ -7,4 +7,4 @@ from static_variables import resolve_static
 def global_thread_safe_counter():
     with static(threading.Lock()):
         counter += 1
-    return counter
+        return counter
