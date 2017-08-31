@@ -264,3 +264,7 @@ def attr_getter(attribute):
     if is_code_arg:
         return operator.attrgetter(CODE_ATTR + '.' + attribute)
     return operator.attrgetter(attribute)
+
+
+def make_function(*args, **kwargs):
+    return set_attr((lambda: None), *args, **kwargs)

@@ -107,6 +107,13 @@ class TestStaticVariables(unittest.TestCase):
         self.assertEqual(ls, [2])
         self.assertIs(ls, f())
 
+    def test_redundant_constants(self):
+        @t
+        def f():
+            return static(None), static(None), static(None), static(None), static(None), static(None)
+
+        self.assertLess(len(static_variables.codetools.get_attr(f, 'co_consts')), 3)
+
     def test_empty_set_literal(self):
         @t(empty_set_literal=True)
         def f():

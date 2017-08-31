@@ -17,7 +17,7 @@ __all__ = ('static', 'resolve_static', 'EMPTY_SET', 'NO_VALUE')
 __author__ = 'Mital Ashok'
 __credits__ = ['Mital Ashok']
 __license__ = 'MIT'
-__version__ = '0.0.4'
+__version__ = '0.0.5'
 __maintainer__ = 'Mital Ashok'
 __author_email__ = __email__ = 'mital.vaja@googlemail.com'
 __status__ = 'Development'
@@ -137,6 +137,7 @@ def resolve_static(f=None, empty_set_literal=False, static_variables=None):
     stack_length = 0
     static_code = []
     constants = list(_GET_ATTRIBUTE['co_consts'](f))
+    constant_mapping = {id(x): i for i, x in enumerate(constants)}
     const_index = itertools.count(len(constants))
     in_static = False
     instructions = list(dis.Bytecode(f))[::-1]
@@ -191,12 +192,16 @@ def resolve_static(f=None, empty_set_literal=False, static_variables=None):
                 raise SyntaxError('Must call `static` with one positional argument')
             static_code.extend(opcode_desc.create_instruction('RETURN_VALUE', None, None, '', i.offset, i.starts_line, False))
             next_constant = _evaluate_static(f, opcode_desc.reassemble(static_code))
-            constants.append(next_constant)
-            static_code = []
+            try:
+                index = constant_mapping[id(next_constant)]
+            except KeyError:
+                constants.append(next_constant)
+                index = next(const_index)
             new_code.extend(opcode_desc.create_instruction(
-                'LOAD_CONST', next(const_index), next_constant,
+                'LOAD_CONST', index, next_constant,
                 '<avoid calling repr() on arbitrary objects>', i.offset, i.starts_line, False
             ))
+            static_code = []
             in_static = False
         else:
             new_code.append(i)

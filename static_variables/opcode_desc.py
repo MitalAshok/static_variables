@@ -13,15 +13,13 @@ __all__ = (
     'is_non_global_scope_getter', 'is_variable_manipulator'
 )
 
-if type(b'') is str:
-    def _to_bytes(byte_array):
-        return b''.join(chr(byte) for byte in byte_array)
-else:
-    _to_bytes = bytes
-
 
 def _neg_arg(i):
     return -i.argval
+
+
+def _neg_arg_p(i):
+    return _neg_arg(i) + 1
 
 
 def _error_raiser(error):
@@ -43,7 +41,7 @@ def get_stack_change(instruction):
 
     return x(instruction)
 
-_unexpected_argument = 'Opcode {opname!r} ({opcode!r}) should not have an arg, but has arg {arg!r}'.format
+_unexpected_argument = 'Opcode {!r} ({!r}) should not have an arg, but has arg {!r}'.format
 _expected_argument = 'Opcode {!r} ({!r}) should have an arg, but doesn\'t'.format
 
 
@@ -77,6 +75,12 @@ def create_instruction(op_name_or_code, arg=None, argval=None, argrepr='', offse
     yield dis.Instruction(opname, opcode_, arg, argval, argrepr, offset, starts_line, is_jump_target)
 
 
+def create_instructions(*arguments):
+    for args in arguments:
+        for i in create_instruction(*args):
+            yield i
+
+
 def reassemble(instructions):
     code = bytearray()
     for i in instructions:
@@ -90,7 +94,7 @@ def reassemble(instructions):
             if i.arg is not None:
                 raise ValueError(_unexpected_argument(i.opname, opcode_, i.arg))
             code.append(0)
-    return _to_bytes(code)
+    return bytes(code)
 
 
 def validate_bytecode(code):
@@ -133,7 +137,7 @@ stack_change.update({
     'BINARY_TRUE_DIVIDE': -1,
     'INPLACE_FLOOR_DIVIDE': -1,
     'INPLACE_TRUE_DIVIDE': -1,
-    'GET_AITER': None,
+    'GET_AITER': 0,
     'GET_ANEXT': None,
     'BEFORE_ASYNC_WITH': None,
     'INPLACE_ADD': -1,
@@ -171,7 +175,7 @@ stack_change.update({
     'POP_EXCEPT': None,
     'STORE_NAME': None,
     'DELETE_NAME': None,
-    'UNPACK_SEQUENCE': None,
+    'UNPACK_SEQUENCE': (lambda i: -_neg_arg_p(i)),
     'FOR_ITER': None,
     'UNPACK_EX': None,
     'STORE_ATTR': None,
@@ -180,9 +184,9 @@ stack_change.update({
     'DELETE_GLOBAL': 0,
     'LOAD_CONST': +1,
     'LOAD_NAME': None,
-    'BUILD_TUPLE': (lambda i: _neg_arg(i) + 1),
-    'BUILD_LIST': (lambda i: _neg_arg(i) + 1),
-    'BUILD_SET': (lambda i: _neg_arg(i) + 1),
+    'BUILD_TUPLE': _neg_arg_p,
+    'BUILD_LIST': _neg_arg_p,
+    'BUILD_SET': _neg_arg_p,
     'BUILD_MAP': (lambda i: _neg_arg(i) * 2 + 1),
     'LOAD_ATTR': 0,
     'COMPARE_OP': -1,
@@ -203,7 +207,7 @@ stack_change.update({
     'STORE_FAST': -1,
     'DELETE_FAST': 0,
     'STORE_ANNOTATION': None,
-    'RAISE_VARARGS': None,
+    'RAISE_VARARGS': _neg_arg,
     'CALL_FUNCTION': _neg_arg,
     'MAKE_FUNCTION': _error_raiser(SyntaxError('Do not make functions (or list comprehensions) in `static`')),
     'BUILD_SLICE': _neg_arg,
@@ -214,19 +218,19 @@ stack_change.update({
     'CALL_FUNCTION_KW': (lambda i: _neg_arg(i) - 2),
     'CALL_FUNCTION_EX': None,
     'SETUP_WITH': None,
-    'EXTENDED_ARG': None,
+    'EXTENDED_ARG': 0,
     'LIST_APPEND': None,
     'SET_ADD': None,
     'MAP_ADD': None,
     'LOAD_CLASSDEREF': None,
-    'BUILD_LIST_UNPACK': (lambda i: _neg_arg(i) + 1),
+    'BUILD_LIST_UNPACK': _neg_arg_p,
     'BUILD_MAP_UNPACK': None,
     'BUILD_MAP_UNPACK_WITH_CALL': None,
-    'BUILD_TUPLE_UNPACK': (lambda i: _neg_arg(i) + 1),
-    'BUILD_SET_UNPACK': (lambda i: _neg_arg(i) + 1),
+    'BUILD_TUPLE_UNPACK': _neg_arg_p,
+    'BUILD_SET_UNPACK': _neg_arg_p,
     'SETUP_ASYNC_WITH': None,
-    'FORMAT_VALUE': None,
+    'FORMAT_VALUE': (lambda i: -1 - (i.argval & 0x04 == 0x04)),
     'BUILD_CONST_KEY_MAP': _neg_arg,
     'BUILD_STRING': _neg_arg,
-    'BUILD_TUPLE_UNPACK_WITH_CALL': None,
+    'BUILD_TUPLE_UNPACK_WITH_CALL': _neg_arg,
 })

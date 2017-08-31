@@ -38,7 +38,11 @@ METHOD_ARGS: Union[Tuple[str, str, str], Tuple[str, str]]
 
 HAS_KWARGS: bool
 
-CODE_ARGS: Tuple[str, ...]
+CODE_ARGS: Union[
+    Tuple[str, str, str, str, str, str, str, str, str, str, str, str, str, str, str],
+    Tuple[str, str, str, str, str, str, str, str, str, str, str, str, str, str]
+]
+
 
 def copy(x: T) -> T:
     ...
@@ -89,5 +93,20 @@ def get_attr(f: FunctionType, attribute: str) -> _constructor_args:
 
 def attr_getter(attribute: str) -> Callable[[FunctionType], _constructor_args]:
     ...
+
+
+@overload
+def make_function(attribute: str, new_value: _constructor_args) -> FunctionType:
+    ...
+
+
+@overload
+def make_function(**kwargs: _constructor_args) -> FunctionType:
+    ...
+
+
+def make_function(*args: Union[str, _constructor_args], **kwargs: _constructor_args) -> FunctionType:
+    ...
+
 
 del _constructor_args, T

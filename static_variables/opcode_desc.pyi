@@ -1,14 +1,17 @@
 """Typing stub for static_variables.opcode_desc"""
 
-from typing import Tuple, Callable, Union, Iterable, Optional, Any, Dict, Generator
+from typing import Tuple, Callable, Union, Iterable, Optional, Any, Dict, Generator, Sequence
 
 from dis import Instruction
 
 __all__: Tuple[str, ...]
 
-_to_bytes: Callable[[bytearray], bytes]
 
 def _neg_arg(i: Instruction) -> int:
+    ...
+
+
+def _neg_arg_p(i: Instruction) -> int:
     ...
 
 
@@ -28,6 +31,10 @@ def create_instruction(
         argrepr: str='', offset: Optional[int]=None, starts_line: Optional[int]=None,
         is_jump_target: Optional[bool]=False
 ) -> Generator[Instruction, None, None]:
+    ...
+
+
+def create_instructions(*arguments: Iterable) -> Generator[Instruction, None, None]:
     ...
 
 

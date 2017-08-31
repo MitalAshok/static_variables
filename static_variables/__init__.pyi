@@ -3,6 +3,10 @@
 from typing import Tuple, List, TypeVar, Optional, Union, Callable, Any, Mapping, Dict
 from types import FunctionType, CodeType
 
+# Submodules
+codetools: Any
+opcode_desc: Any
+
 TYPE_CHECKING: bool
 
 __all__: Tuple[str, ...]
